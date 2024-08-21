@@ -1,9 +1,19 @@
-from textnode import TextNode, text_type_bold
+from block_markdown import markdown_to_blocks
 
 
 def main():
-    node = TextNode("This is a text node", text_type_bold, "https://www.boot.dev")
-    print(node)
+    text = """
+            # This is a heading
+
+            This is a paragraph of text. It has some **bold** and *italic* words inside of it.
+
+            * This is the first list item in a list block
+            * This is a list item
+            * This is another list item
+            """
+
+    block_nodes = markdown_to_blocks(text)
+    print(block_nodes)
 
 
 main()
