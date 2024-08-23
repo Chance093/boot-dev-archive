@@ -1,19 +1,28 @@
-from block_markdown import markdown_to_blocks
-
+import os
+import shutil
 
 def main():
-    text = """
-            # This is a heading
+    static_to_public()
 
-            This is a paragraph of text. It has some **bold** and *italic* words inside of it.
+def static_to_public():
+    current_dir = os.listdir(path=".")
+    if "static" not in current_dir:
+        raise Exception("No static directory found")
 
-            * This is the first list item in a list block
-            * This is a list item
-            * This is another list item
-            """
+    if "public" in current_dir:
+        shutil.rmtree("./public")
+    
+    os.mkdir("./public")
+    copy_files_to_public("./static")
 
-    block_nodes = markdown_to_blocks(text)
-    print(block_nodes)
+def copy_files_to_public(parent_path):
+    current_dir = os.listdir(path=parent_path)
+    for f_or_d in current_dir:
+        current_path = f"{parent_path}/{f_or_d}"
+        if os.path.isfile(path=current_path):
+            shutil.copy(current_path, f"./public/{current_path.removeprefix('./static/')}")
+        else:
+            os.mkdir(f"./public/{current_path.removeprefix('./static/')}")
+            copy_files_to_public(current_path)
 
-
-main()
+main() 
