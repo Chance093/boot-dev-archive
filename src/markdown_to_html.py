@@ -52,7 +52,11 @@ def markdown_to_html_node(markdown):
             children = []
             i = 1
             for line in split_block:
-                children.append(LeafNode("li", line.lstrip(f"{i}. ")))
+                text_nodes = text_to_text_nodes(line.lstrip(f"{i}. "))
+                grandchildren = []
+                for text_node in text_nodes:
+                    grandchildren.append(text_node_to_html_node(text_node))
+                children.append(ParentNode("li", grandchildren))
                 i += 1
 
             html_nodes.append(ParentNode("ol", children))
