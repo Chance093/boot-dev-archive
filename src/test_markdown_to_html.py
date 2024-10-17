@@ -22,13 +22,13 @@ This is the same paragraph on a new line
         md = """
 This is **bolded** paragraph
 
-> This is another paragraph with italic text and code here
+> This is another paragraph with *italic* text and code here
 > This is the same paragraph on a new line
 
 1. This is a list
 2. with items
 """
-        html_answer = "<div><p>This is <b>bolded</b> paragraph</p><blockquote>This is another paragraph with italic text and code here\nThis is the same paragraph on a new line</blockquote><ol><li>This is a list</li><li>with items</li></ol></div>"
+        html_answer = "<div><p>This is <b>bolded</b> paragraph</p><blockquote>This is another paragraph with <i>italic</i> text and code here\nThis is the same paragraph on a new line</blockquote><ol><li>This is a list</li><li>with items</li></ol></div>"
 
         html = markdown_to_html_node(md)
         self.assertEqual(html, html_answer) 

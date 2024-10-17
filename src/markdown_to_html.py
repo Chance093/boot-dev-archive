@@ -20,9 +20,13 @@ def markdown_to_html_node(markdown):
             joined_lines = []
             for line in split_lines:
                 joined_lines.append(line.lstrip("> "))
-
             quotes = "\n".join(joined_lines)
-            html_nodes.append(LeafNode("blockquote", quotes))
+
+            text_nodes = text_to_text_nodes(quotes)
+            children = []
+            for text_node in text_nodes:
+                children.append(text_node_to_html_node(text_node))
+            html_nodes.append(ParentNode("blockquote", children))
 
         elif block_type == "paragraph":
             text_nodes = text_to_text_nodes(block)
@@ -35,7 +39,11 @@ def markdown_to_html_node(markdown):
             split_block = block.split("\n")
             children = []
             for line in split_block:
-                children.append(LeafNode("li", line.lstrip("* ").lstrip("- ")))
+                text_nodes = text_to_text_nodes(line.lstrip("* ").lstrip("- "))
+                grandchildren = []
+                for text_node in text_nodes:
+                    grandchildren.append(text_node_to_html_node(text_node))
+                children.append(ParentNode("li", grandchildren))
 
             html_nodes.append(ParentNode("ul", children))
 
