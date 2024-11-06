@@ -13,8 +13,15 @@ func main() {
 
 	for scanner.Scan() {
 		txt := scanner.Text()
-		commands[txt].callback()
-    // TODO: add error handling for invalid commands
+    cmd, ok := commands[txt]
+    if !ok {
+      fmt.Println("Please enter a valid command (See help command).")
+      fmt.Println("")
+		  fmt.Print("pokedex > ")
+      continue
+    }
+
+		cmd.callback()
 		fmt.Print("pokedex > ")
 	}
 
