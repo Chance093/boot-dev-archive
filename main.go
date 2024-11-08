@@ -13,7 +13,8 @@ func main() {
 
 	for scanner.Scan() {
 		txt := scanner.Text()
-    cmd, ok := commands[txt]
+    cleanInput := cleanInput(txt)
+    cmd, ok := commands[cleanInput[0]]
     if !ok {
       fmt.Println("Please enter a valid command (See help command).")
       fmt.Println("")
