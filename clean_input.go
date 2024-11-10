@@ -5,7 +5,7 @@ import (
 )
 
 func cleanInput(input string) []string {
-  cleanedInput := strings.TrimSpace(input)
-  splitInput := strings.Split(cleanedInput, " ")
+  lower := strings.ToLower(input)
+  splitInput := strings.Fields(lower)
   return splitInput
 }

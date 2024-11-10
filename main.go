@@ -22,7 +22,11 @@ func main() {
       continue
     }
 
-		cmd.callback()
+    err := cmd.callback()
+    if err != nil {
+      fmt.Println(err)
+    }
+
 		fmt.Print("pokedex > ")
 	}
 

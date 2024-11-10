@@ -23,6 +23,11 @@ func getCommands() map[string]cliCommand {
 			description: "Exit the pokedex",
 			callback:    commandExit,
 		},
+    "map": {
+      name: "map",
+      description: "Lists available locations",
+      callback: commandMap,
+    },
 	}
 }
 
@@ -42,5 +47,18 @@ func commandHelp() error {
 func commandExit() error {
 	os.Exit(0)
 	return nil
+}
+
+func commandMap() error {
+  res, err := getLocations()
+  if err != nil {
+    return err
+  }
+
+  for _, location := range res.Results {
+    fmt.Println(location.Name)
+  }
+
+  return nil
 }
 
