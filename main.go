@@ -6,9 +6,20 @@ import (
 	"os"
 )
 
+type Config struct {
+  Next *string
+  Previous *string
+}
+
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-	commands := getCommands()
+  config := Config{
+    Next: nil,
+    Previous: nil,
+  }
+
+	commands := getCommands(&config)
+
 	fmt.Print("pokedex > ")
 
 	for scanner.Scan() {

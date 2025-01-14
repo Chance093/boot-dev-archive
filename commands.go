@@ -1,8 +1,8 @@
 package main
 
 import (
-  "fmt"
-  "os"
+	"fmt"
+	"os"
 )
 
 type cliCommand struct {
@@ -11,28 +11,33 @@ type cliCommand struct {
 	callback    func() error
 }
 
-func getCommands() map[string]cliCommand {
+func getCommands(config *Config) map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
 			name:        "help",
 			description: "Displays a help message",
-			callback:    commandHelp,
+			callback:    func() error { return commandHelp(config) },
 		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the pokedex",
 			callback:    commandExit,
 		},
-    "map": {
-      name: "map",
-      description: "Lists available locations",
-      callback: commandMap,
-    },
+		"map": {
+			name:        "map",
+			description: "Lists available locations",
+			callback:    func() error { return commandMap(config, config.Next) },
+		},
+		"mapb": {
+			name:        "map",
+			description: "Lists previous available locations",
+			callback:    func() error { return commandMap(config, config.Previous) },
+		},
 	}
 }
 
-func commandHelp() error {
-	cmd := getCommands()
+func commandHelp(config *Config) error {
+	cmd := getCommands(config)
 	fmt.Println("\nWelcome to the Pokedex!")
 	fmt.Println("Usage:")
 	fmt.Println("")
@@ -45,20 +50,23 @@ func commandHelp() error {
 }
 
 func commandExit() error {
+	fmt.Println("\nClosing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandMap() error {
-  res, err := getLocations()
-  if err != nil {
-    return err
-  }
+func commandMap(config *Config, url *string) error {
+	res, err := getLocations(url)
+	if err != nil {
+		return err
+	}
 
-  for _, location := range res.Results {
-    fmt.Println(location.Name)
-  }
+  config.Next = res.Next
+  config.Previous = res.Previous
 
-  return nil
+	for _, location := range res.Results {
+		fmt.Println(location.Name)
+	}
+
+	return nil
 }
-
