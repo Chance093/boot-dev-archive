@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 )
@@ -8,36 +9,36 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*Config) error
 }
 
-func getCommands(config *Config) map[string]cliCommand {
+func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
 			name:        "help",
 			description: "Displays a help message",
-			callback:    func() error { return commandHelp(config) },
+			callback:    commandHelp,
 		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the pokedex",
 			callback:    commandExit,
 		},
-		"map": {
-			name:        "map",
+		"mapf": {
+			name:        "mapf",
 			description: "Lists available locations",
-			callback:    func() error { return commandMap(config, config.Next) },
+			callback:    commandMapF,
 		},
 		"mapb": {
-			name:        "map",
+			name:        "mapb",
 			description: "Lists previous available locations",
-			callback:    func() error { return commandMap(config, config.Previous) },
+			callback:    commandMapB,
 		},
 	}
 }
 
-func commandHelp(config *Config) error {
-	cmd := getCommands(config)
+func commandHelp(cfg *Config) error {
+	cmd := getCommands()
 	fmt.Println("\nWelcome to the Pokedex!")
 	fmt.Println("Usage:")
 	fmt.Println("")
@@ -49,20 +50,40 @@ func commandHelp(config *Config) error {
 	return nil
 }
 
-func commandExit() error {
+func commandExit(cfg *Config) error {
 	fmt.Println("\nClosing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandMap(config *Config, url *string) error {
-	res, err := getLocations(url)
+func commandMapF(cfg *Config) error {
+	res, err := cfg.PokeClient.GetLocations(cfg.Next)
 	if err != nil {
 		return err
 	}
 
-  config.Next = res.Next
-  config.Previous = res.Previous
+  cfg.Next = res.Next
+  cfg.Previous = res.Previous
+
+	for _, location := range res.Results {
+		fmt.Println(location.Name)
+	}
+
+	return nil
+}
+
+func commandMapB(cfg *Config) error {
+  if cfg.Previous == nil {
+    return errors.New("you're on the first page")
+  }
+
+	res, err := cfg.PokeClient.GetLocations(cfg.Previous)
+	if err != nil {
+		return err
+	}
+
+  cfg.Next = res.Next
+  cfg.Previous = res.Previous
 
 	for _, location := range res.Results {
 		fmt.Println(location.Name)
