@@ -57,7 +57,7 @@ func commandExit(cfg *Config) error {
 }
 
 func commandMapF(cfg *Config) error {
-	res, err := cfg.PokeClient.GetLocations(cfg.Next)
+	res, err := cfg.Client.GetLocations(cfg.Next)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func commandMapB(cfg *Config) error {
     return errors.New("you're on the first page")
   }
 
-	res, err := cfg.PokeClient.GetLocations(cfg.Previous)
+	res, err := cfg.Client.GetLocations(cfg.Previous)
 	if err != nil {
 		return err
 	}

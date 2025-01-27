@@ -3,7 +3,7 @@ package pokecache
 import "time"
 
 // Add an entry to the PokeCache
-func (c *PokeCache) Add(key string, val []byte) {
+func (c *Cache) Add(key string, val []byte) {
   c.mu.Lock()
   defer c.mu.Unlock()
 
@@ -15,7 +15,7 @@ func (c *PokeCache) Add(key string, val []byte) {
 
 // Get an entry from the PokeCache
 // Returns a byte slice containing cached data and boolean based on if entry was found
-func (c *PokeCache) Get(key string) ([]byte, bool) {
+func (c *Cache) Get(key string) ([]byte, bool) {
   c.mu.Lock()
   defer c.mu.Unlock()
 
