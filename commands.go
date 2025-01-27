@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"math"
+	"math/rand"
 	"os"
 )
 
@@ -38,6 +40,16 @@ func getCommands() map[string]cliCommand {
 			name:        "explore",
 			description: "Takes an area and lists pokemon in that area",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "Attempts to catch a pokemon",
+			callback:    commandCatch,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "Inspect a pokemon",
+			callback:    commandInspect,
 		},
 	}
 }
@@ -98,11 +110,11 @@ func commandMapB(cfg *Config, args ...string) error {
 }
 
 func commandExplore(cfg *Config, args ...string) error {
-  if len(args) < 1 {
-    return errors.New("Please give an area after the command")
-  }
+	if len(args) < 1 {
+		return errors.New("Please give an area after the command")
+	}
 
-  area := args[0]
+	area := args[0]
 
 	pokemon, err := cfg.Client.GetPokemonList(area)
 	if err != nil {
@@ -114,4 +126,68 @@ func commandExplore(cfg *Config, args ...string) error {
 	}
 
 	return nil
+}
+
+func commandCatch(cfg *Config, args ...string) error {
+	if len(args) < 1 {
+		return errors.New("Please give a pokemon you wish to catch")
+	}
+
+	pokemonName := args[0]
+
+	fmt.Printf("Throwing a Pokeball at %v...\n", pokemonName)
+
+	pokemon, err := cfg.Client.GetPokemon(pokemonName)
+	if err != nil {
+		return err
+	}
+
+	isCaught := isCatch(pokemon.BaseExperience)
+	if isCaught {
+		cfg.Pokedex.AddPokemon(pokemon)
+		fmt.Printf("%v was caught!\n", pokemon.Name)
+		return nil
+	}
+
+	fmt.Printf("%v escaped!\n", pokemon.Name)
+	return nil
+}
+
+func isCatch(base_xp int) bool {
+	flooredInt := int(math.Floor(float64(base_xp / 20)))
+	random := rand.Intn(flooredInt)
+	guess := rand.Intn(flooredInt)
+
+	if guess == random {
+		return true
+	}
+
+	return false
+}
+
+func commandInspect(cfg *Config, args ...string) error {
+	if len(args) < 1 {
+		return errors.New("Please give a pokemon you wish to inspect")
+	}
+
+	pokemonName := args[0]
+
+  stats, err := cfg.Pokedex.GetPokemon(pokemonName)
+  if err != nil {
+    return err
+  }
+
+  fmt.Printf("Name: %v\n", stats.Name)
+  fmt.Printf("Height: %v\n", stats.Height)
+  fmt.Printf("Weight: %v\n", stats.Weight)
+  fmt.Println("Stats:")
+  for _, stat := range stats.Stats {
+    fmt.Printf("  - %v: %d\n", stat.Stat.Name, stat.BaseStat)
+  }
+  fmt.Println("Types:")
+  for _, ptype := range stats.Types {
+    fmt.Printf("  - %v\n", ptype.Type.Name)
+  }
+
+  return nil
 }

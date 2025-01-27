@@ -11,13 +11,13 @@ type Location struct {
 }
 
 type ShallowLocationResp struct {
-Id                int `json:"id"`
-Name              string `json:"name"`
-PokemonEncounters []Pokemon `json:"pokemon_encounters"`
+	Id                int                 `json:"id"`
+	Name              string              `json:"name"`
+	PokemonEncounters []PokemonInLocation `json:"pokemon_encounters"`
 }
 
-type Pokemon struct {
+type PokemonInLocation struct {
 	Pokemon struct {
-Name string `json:"name"`
-} `json:"pokemon"`
+		Name string `json:"name"`
+	} `json:"pokemon"`
 }
