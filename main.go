@@ -1,21 +1,25 @@
 package main
 
 import (
-  "time"
-  "github.com/Chance093/pokedexcli/internal/pokeapi"
+	"time"
+
+	"github.com/Chance093/pokedexcli/internal/pokeapi"
 )
 
 type Config struct {
-  PokeClient *pokeapi.PokeClient
-  Next *string
-  Previous *string
+	Client *pokeapi.Client
+	Next       *string
+	Previous   *string
 }
 
 func main() {
-  pokeClient := pokeapi.NewClient(3 * time.Second)
-  cfg := &Config{
-    PokeClient: pokeClient,
-  }
+  const timeout = time.Second * 3
+  const cacheInterval = time.Minute * 1
+	c := pokeapi.NewClient(timeout, cacheInterval)
 
-  startRepl(cfg)
+	cfg := &Config{
+		Client: c,
+	}
+
+	startRepl(cfg)
 }
