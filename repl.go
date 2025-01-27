@@ -17,7 +17,10 @@ func startRepl(cfg *Config) {
 	for scanner.Scan() {
 		txt := scanner.Text()
     cleanInput := cleanInput(txt)
-    cmd, exists := commands[cleanInput[0]]
+    command := cleanInput[0]
+    args := cleanInput[1:]
+
+    cmd, exists := commands[command]
     if !exists {
       fmt.Println("Please enter a valid command (See help command).")
       fmt.Println("")
@@ -25,7 +28,7 @@ func startRepl(cfg *Config) {
       continue
     }
 
-    err := cmd.callback(cfg)
+    err := cmd.callback(cfg, args...)
     if err != nil {
       fmt.Println(err)
     }

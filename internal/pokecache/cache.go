@@ -1,7 +1,6 @@
 package pokecache
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -37,7 +36,6 @@ func (c *Cache) reapLoop(interval time.Duration) {
     for key, entry := range c.entries {
       elapsedTime := time.Now().Sub(entry.createdAt)
       if elapsedTime > interval {
-        fmt.Printf("Deleting key: %v", key)
         delete(c.entries, key)
       }
     }
