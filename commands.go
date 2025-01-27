@@ -51,6 +51,11 @@ func getCommands() map[string]cliCommand {
 			description: "Inspect a pokemon",
 			callback:    commandInspect,
 		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "List all caught pokemon in your pokedex",
+			callback:    commandPokedex,
+		},
 	}
 }
 
@@ -172,22 +177,36 @@ func commandInspect(cfg *Config, args ...string) error {
 
 	pokemonName := args[0]
 
-  stats, err := cfg.Pokedex.GetPokemon(pokemonName)
-  if err != nil {
-    return err
-  }
+	stats, err := cfg.Pokedex.GetPokemon(pokemonName)
+	if err != nil {
+		return err
+	}
 
-  fmt.Printf("Name: %v\n", stats.Name)
-  fmt.Printf("Height: %v\n", stats.Height)
-  fmt.Printf("Weight: %v\n", stats.Weight)
-  fmt.Println("Stats:")
-  for _, stat := range stats.Stats {
-    fmt.Printf("  - %v: %d\n", stat.Stat.Name, stat.BaseStat)
-  }
-  fmt.Println("Types:")
-  for _, ptype := range stats.Types {
-    fmt.Printf("  - %v\n", ptype.Type.Name)
-  }
+	fmt.Printf("Name: %v\n", stats.Name)
+	fmt.Printf("Height: %v\n", stats.Height)
+	fmt.Printf("Weight: %v\n", stats.Weight)
+	fmt.Println("Stats:")
+	for _, stat := range stats.Stats {
+		fmt.Printf("  - %v: %d\n", stat.Stat.Name, stat.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, ptype := range stats.Types {
+		fmt.Printf("  - %v\n", ptype.Type.Name)
+	}
 
-  return nil
+	return nil
+}
+
+func commandPokedex(cfg *Config, _ ...string) error {
+	pokemon, err := cfg.Pokedex.GetPokemonList()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Your Pokedex:")
+	for _, pm := range pokemon {
+		fmt.Printf("  - %v\n", pm)
+	}
+
+	return nil
 }
