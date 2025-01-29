@@ -1,23 +1,27 @@
 package main
 
 import (
-	"os"
+	"fmt"
 
 	"github.com/Chance093/gator/internal/config"
 )
 
 
 func main() {
-  const configFile = "/.gatorconfig.json"
-
-  path, err := os.UserHomeDir()
+  cfg, err := config.Read()
   if err != nil {
     panic(err)
   }
 
-  _, err = config.Read(path + configFile)
+  err = cfg.SetUser("chance")
   if err != nil {
     panic(err)
   }
+
+  cfg, err = config.Read()
+  if err != nil {
+    panic(err)
+  }
+
+  fmt.Println(*cfg)
 }
-
