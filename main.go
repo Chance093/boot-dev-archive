@@ -1,39 +1,55 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"os"
 
 	"github.com/Chance093/gator/internal/config"
+	"github.com/Chance093/gator/internal/database"
+	_ "github.com/lib/pq"
 )
 
 type state struct {
+  db *database.Queries
 	cfg *config.Config
 }
 
 func main() {
+  // Read config from root dir
 	cfg, err := config.Read()
 	if err != nil {
-    log.Fatal(err)
+		log.Fatal(err)
 	}
 
+  // Open pg db connection
+  db, err := sql.Open("postgres", cfg.DB_URL)
+  if err != nil {
+    log.Fatal(err)
+  }
+  defer db.Close()
+
+  // Init application state
+  s := &state{
+    db: database.New(db),
+    cfg: cfg,
+  }
+
+  // Register commands for cli
   cmds := commands{
     registeredCommands: make(map[string]func(*state, command) error),
   }
   cmds.register("login", handlerLogin)
 
-  s := &state{
-    cfg,
-  }
+  // Run command
+	rawArgs := os.Args[1:]
+	if len(rawArgs) < 1 {
+		log.Fatal(err)
+	}
 
-  rawArgs := os.Args[1:]
-  if len(rawArgs) < 1 {
-    log.Fatal(err)
-  }
+	cmdName, cmdArgs := rawArgs[0], rawArgs[1:]
 
-  cmdName, cmdArgs := rawArgs[0], rawArgs[1:]
-
-  if err := cmds.run(s, command{cmdName, cmdArgs}); err != nil {
-    log.Fatal(err)
-  }
+	if err := cmds.run(s, command{cmdName, cmdArgs}); err != nil {
+		log.Fatal(err)
+	}
 }
