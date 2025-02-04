@@ -25,7 +25,7 @@ func main() {
   // Open pg db connection
   db, err := sql.Open("postgres", cfg.DB_URL)
   if err != nil {
-    log.Fatal(err)
+    log.Fatalf("error connecting to db: %v", err)
   }
   defer db.Close()
 
@@ -41,6 +41,7 @@ func main() {
   }
   cmds.register("login", handlerLogin)
   cmds.register("register", handlerRegister)
+  cmds.register("reset", handlerReset)
 
   // Run command
 	rawArgs := os.Args[1:]

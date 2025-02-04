@@ -38,7 +38,6 @@ func handlerRegister(s *state, cmd command) error {
 
   username := cmd.args[0]
   ctx := context.Background()
-  id := uuid.New()
 
   _, err := s.db.GetUser(ctx, username)
   if err == nil {
@@ -46,9 +45,9 @@ func handlerRegister(s *state, cmd command) error {
   }
 
   user, err := s.db.CreateUser(ctx, database.CreateUserParams{
-    ID: id,
-    CreatedAt: time.Now(),
-    UpdatedAt: time.Now(),
+    ID: uuid.New(),
+    CreatedAt: time.Now().UTC(),
+    UpdatedAt: time.Now().UTC(),
     Name: username,
   })
   if err != nil {
@@ -60,5 +59,21 @@ func handlerRegister(s *state, cmd command) error {
   }
 
   fmt.Printf("User %v has been created and set\n", username)
+  return nil
+}
+
+func handlerReset(s *state, _ command) error {
+  ctx := context.Background()
+
+  if err := s.db.DeleteAllUsers(ctx); err != nil {
+    return fmt.Errorf("could not delete users: %v", err)
+  }
+
+  if err := s.cfg.SetUser(""); err != nil {
+    return fmt.Errorf("failed to reset user in config %v", err)
+  }
+
+  fmt.Println("reset users")
+
   return nil
 }
