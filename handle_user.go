@@ -70,10 +70,34 @@ func handlerReset(s *state, _ command) error {
   }
 
   if err := s.cfg.SetUser(""); err != nil {
-    return fmt.Errorf("failed to reset user in config %v", err)
+    return fmt.Errorf("failed to reset user in config: %v", err)
   }
 
   fmt.Println("reset users")
+
+  return nil
+}
+
+func handlerListUsers(s *state, _ command) error {
+  ctx := context.Background()
+  users, err := s.db.GetAllUsers(ctx)
+  if err != nil {
+    return fmt.Errorf("couldn't list users: %v", err)
+  }
+
+  if len(users) == 0 {
+    fmt.Println("no users")
+    return nil
+  }
+
+
+  for _, user := range users {
+    if user.Name == s.cfg.Current_user_name{
+      fmt.Printf("* %v (current)\n", user.Name)
+      continue
+    }
+    fmt.Printf("* %v\n", user.Name)
+  }
 
   return nil
 }
