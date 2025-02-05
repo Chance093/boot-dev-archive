@@ -10,18 +10,13 @@ import (
 	"github.com/google/uuid"
 )
 
-func handlerFollow(s *state, cmd command) error {
+func handlerFollow(s *state, cmd command, user database.User) error {
   if len(cmd.args) != 1 {
     return errors.New("command takes 1 arg which is url")
   }
 
   url := cmd.args[0]
   ctx := context.Background()
-
-  user, err := s.db.GetUser(ctx, s.cfg.Current_user_name)
-  if err != nil {
-    return fmt.Errorf("user not found: %v", err)
-  }
 
   feed, err := s.db.GetFeedByUrl(ctx, url)
   if err != nil {
@@ -44,13 +39,8 @@ func handlerFollow(s *state, cmd command) error {
   return nil
 }
 
-func handlerFollowing(s *state, _ command) error {
+func handlerFollowing(s *state, _ command, user database.User) error {
   ctx := context.Background()
-
-  user, err := s.db.GetUser(ctx, s.cfg.Current_user_name)
-  if err != nil {
-    return fmt.Errorf("failed to get user: %v", err)
-  }
 
   feeds, err := s.db.GetFeedFollowsForUser(ctx, user.ID)
   if err != nil {
