@@ -20,14 +20,7 @@ INSERT INTO feeds(
   name,
   url,
   user_id
-) VALUES (
-  $1,
-  $2,
-  $3,
-  $4,
-  $5,
-  $6
-)
+) VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING id, created_at, updated_at, name, url, user_id
 `
 
@@ -59,4 +52,40 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 		&i.UserID,
 	)
 	return i, err
+}
+
+const getAllFeeds = `-- name: GetAllFeeds :many
+SELECT feeds.url, feeds.name, users.name AS username 
+FROM feeds
+INNER JOIN users
+ON feeds.user_id = users.id
+`
+
+type GetAllFeedsRow struct {
+	Url      string
+	Name     string
+	Username string
+}
+
+func (q *Queries) GetAllFeeds(ctx context.Context) ([]GetAllFeedsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllFeeds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllFeedsRow
+	for rows.Next() {
+		var i GetAllFeedsRow
+		if err := rows.Scan(&i.Url, &i.Name, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
