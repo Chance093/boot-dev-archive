@@ -12,7 +12,7 @@ import (
 
 func handlerFollow(s *state, cmd command, user database.User) error {
   if len(cmd.args) != 1 {
-    return errors.New("command takes 1 arg which is url")
+    return errors.New("command takes 1 arg which is feed url")
   }
 
   url := cmd.args[0]
@@ -57,5 +57,25 @@ func handlerFollowing(s *state, _ command, user database.User) error {
     fmt.Printf("  * %v\n", feed.Name)
   }
   
+  return nil
+}
+
+func handlerUnfollow(s *state, cmd command, user database.User) error {
+  if len(cmd.args) != 1 {
+    return errors.New("command takes 1 arg which is feed url")
+  }
+  ctx := context.Background()
+
+  url := cmd.args[0]
+
+  err := s.db.DeleteFeedFollow(ctx, database.DeleteFeedFollowParams{
+    UserID: user.ID,
+    Url: url,
+  })
+  if err != nil {
+    return fmt.Errorf("failed to delete feed follow: %v", err)
+  }
+
+  fmt.Printf("unfollowed feed: %v", url)
   return nil
 }
