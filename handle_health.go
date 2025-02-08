@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 func handlerHealth(w http.ResponseWriter, r *http.Request) {
@@ -14,31 +15,43 @@ func handlerHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
-  // Parse payload
+	// Parse payload
 	type payload struct {
 		Body string `json:"body"`
 	}
 
 	pl := payload{}
 	if err := json.NewDecoder(r.Body).Decode(&pl); err != nil {
-    respondWithError(w, http.StatusInternalServerError, "error while decoding payload", err)
+		respondWithError(w, http.StatusInternalServerError, "error while decoding payload", err)
 		return
 	}
 
 	// check if chirp is too long
 	if len(pl.Body) > 140 {
-    respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
-    return
+		respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
+		return
 	}
 
-  // send valid true response
-  type returnVals struct {
-    Valid bool `json:"valid"`
-  }
+	cleanedBod := removeProfan(pl.Body)
 
-	resBody := returnVals{
-		Valid: true,
-	}
+	respondWithJSON(w, http.StatusOK, struct {
+		CleanedBody string `json:"cleaned_body"`
+	}{
+		CleanedBody: cleanedBod,
+	})
+}
 
-  respondWithJSON(w, http.StatusOK, resBody)
+func removeProfan(body string) string {
+	return strings.ReplaceAll(
+		strings.ReplaceAll(
+			strings.ReplaceAll(
+				strings.ReplaceAll(
+					strings.ReplaceAll(
+						strings.ReplaceAll(body,
+							"Fornax", "****"),
+						"Sharbert", "****"),
+					"Kerfuffle", "****"),
+				"fornax", "****"),
+			"sharbert", "****"),
+		"kerfuffle", "****")
 }
