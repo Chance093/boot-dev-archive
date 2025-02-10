@@ -13,6 +13,12 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type apiConfig struct {
+	fileServerHits atomic.Int32
+	db             *database.Queries
+	env            string
+}
+
 func main() {
   const PORT = "8080"
   
@@ -21,33 +27,39 @@ func main() {
     log.Fatalf("could not load .env: %v", err)
   }
 
-
-  // connect db
+  // validate .env vars
   dbUrl := os.Getenv("DB_URL")
+  serverEnv := os.Getenv("SERVER_ENV")
   if dbUrl == "" {
     log.Fatal("DB_URL must be set in .env")
   }
+  if serverEnv == "" {
+    log.Fatal("SERVER_ENV must be set in .env")
+  }
 
-  db, err := sql.Open("postgres", dbUrl)
+  // connect db
+  dbConn, err := sql.Open("postgres", dbUrl)
   if err != nil {
     log.Fatalf("could not connect to db: %v", err)
   }
-  
+
   // init config
   cfg := &apiConfig{
     fileServerHits: atomic.Int32{},
-    db: database.New(db),
-    env: os.Getenv("SERVER_ENV"),
+    db: database.New(dbConn),
+    env: serverEnv,
   }
 
   // handler routes
 	mux := http.NewServeMux()
 	mux.Handle("/app/", cfg.middlewareMetricsInc(http.StripPrefix("/app/", http.FileServer(http.Dir(".")))))
+
 	mux.HandleFunc("GET /api/healthz", handlerHealth)
-	mux.HandleFunc("POST /admin/reset", cfg.handlerReset)
-	mux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
-	mux.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
+  mux.HandleFunc("POST /api/chirps", cfg.handlerCreateChirp)
   mux.HandleFunc("POST /api/users", cfg.handlerCreateUser)
+
+  mux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
+	mux.HandleFunc("POST /admin/reset", cfg.handlerReset)
 
   // init server
 	s := &http.Server{
