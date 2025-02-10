@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 type apiConfig struct {
 	fileServerHits atomic.Int32
 	db             *database.Queries
+	env            string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -40,14 +40,19 @@ func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
+  if cfg.env != "development" {
+    respondWithError(w, http.StatusForbidden, "Route forbidden", nil)
+    return 
+  }
+
 	cfg.fileServerHits.Store(0)
 
-	val := cfg.fileServerHits.Load()
-	b := []byte("Hits: " + strconv.Itoa(int(val)))
-
-	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(b)
+  if err := cfg.db.DeleteAllUsers(r.Context()); err != nil {
+    respondWithError(w, http.StatusInternalServerError, "failed to delete users", err)
+    return
+  }
+  
+  respondWithJSON(w, http.StatusOK, "Users deleted")
 }
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -80,9 +85,9 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	respondWithJSON(w, http.StatusCreated, response{
-    ID: user.ID,
-    Email: user.Email,
-    CreatedAt: user.CreatedAt,
-    UpdatedAt: user.UpdatedAt,
-  })
+		ID:        user.ID,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	})
 }

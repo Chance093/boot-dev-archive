@@ -37,6 +37,7 @@ func main() {
   cfg := &apiConfig{
     fileServerHits: atomic.Int32{},
     db: database.New(db),
+    env: os.Getenv("SERVER_ENV"),
   }
 
   // handler routes
