@@ -1,82 +1,81 @@
 #!/bin/bash
 
-ARG="$1"
 DATABASE_CONNECTION="postgres://postgres:postgres@localhost:5432/chirpy"
+SCHEMA_DIR="sql/schema"
 
-if [ ! $1 ]; then
-  echo "please pass in argument"
+execute_migration() {
+  local command=$1
+  local success_message=$2
+
+  if ! cd "$SCHEMA_DIR" 2>/dev/null; then
+    echo "Error: Could not change to schema directory: $SCHEMA_DIR"
+    exit 1
+  fi
+
+  local output=$(goose postgres $DATABASE_CONNECTION $command 2>&1)
+  local status=$?
+
+  cd - >/dev/null
+
+  if [ $status -eq 0 ]; then
+    if [[ $output == *"no migrations to run"* ]]; then
+      echo "$output"
+      echo
+      return 0
+    fi
+
+    echo "$success_message"
+    echo "$output"
+    echo
+    return 0
+  else
+    echo "Migration failed with status code $status"
+    echo "$output"
+    echo
+    return 1
+  fi
+}
+
+show_help() {
+  cat << EOF
+  Usage: $(basename "$0") <command>
+
+  Commands:
+    up      - Migrate up one version
+    down    - Migrate down one version
+    upall   - Migrate up to latest version
+    downall - Migrate down to version 0
+    help    - Show this help message
+
+EOF
+}
+
+if [ $# -eq 0 ]; then
+  echo "Error: please provide a command"
+  show_help
   exit 1
 fi
 
-if [ $ARG == "up" ]; then
-  output=$(cd sql/schema && goose postgres $DATABASE_CONNECTION up-by-one 2>&1)
-  if [ $? -eq 0 ]; then
-    echo "successfully migrated up one"
-    echo $output
-    echo ""
+case "$1" in
+  "up")
+    execute_migration "up-by-one" "Successfully migrated up one version"
+    ;;
+  "down")
+    execute_migration "down" "Successfully migrated down one version"
+    ;;
+  "upall")
+    execute_migration "up" "Successfully migrated up to latest version"
+    ;;
+  "downall")
+    execute_migration "down-to 0" "Successfully migrated down to version 0"
+    ;;
+  "help")
+    show_help
     exit 0
-  else
-    echo "migration failed with status code $?"
-    echo $output
-    echo ""
+    ;;
+  *)
+    echo "Error: Unknown command '$1'"
+    show_help
     exit 1
-  fi
-fi
-
-if [ $ARG == "down" ]; then
-  output=$(cd sql/schema && goose postgres $DATABASE_CONNECTION down 2>&1)
-  if [ $? -eq 0 ]; then
-    echo "successfully migrated down one"
-    echo $output
-    echo ""
-    exit 0
-  else
-    echo "migration failed with status code $?"
-    echo $output
-    echo ""
-    exit 1
-  fi
-fi
-
-if [ $ARG == "upall" ]; then
-  output=$(cd sql/schema && goose postgres $DATABASE_CONNECTION up 2>&1)
-  if [ $? -eq 0 ]; then
-    echo "successfully migrated up all"
-    echo $output
-    echo ""
-    exit 0
-  else
-    echo "migration failed with status code $?"
-    echo $output
-    echo ""
-    exit 1
-  fi
-fi
-
-if [ $ARG == "downall" ]; then
-  output=$(cd sql/schema && goose postgres $DATABASE_CONNECTION down-to 0 2>&1)
-  if [ $? -eq 0 ]; then
-    echo "successfully migrated down all"
-    echo $output
-    echo ""
-    exit 0
-  else
-    echo "migration failed with status code $?"
-    echo $output
-    echo ""
-    exit 1
-  fi
-fi
-
-if [ $ARG == "help" ]; then
-  echo "arguments to use:"
-  echo "  * up - migrates up one file"
-  echo "  * down - migrates down one file"
-  echo "  * upall - migrates up all files"
-  echo "  * downall - migrates down all files"
-  echo ""
-  exit 0
-fi
-
-echo "argument doesn't exist"
-exit 1
+    ;;
+esac
