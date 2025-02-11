@@ -9,10 +9,6 @@ import (
 )
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
-	// Get the email password from payload
-	// search user in database by email
-	// make sure password is correct
-	// If everything is good return 200, otherwise return 401
 	type payload struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -27,7 +23,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	user, err := cfg.db.GetUserByEmail(r.Context(), pl.Email)
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set") {
-			respondWithError(w, http.StatusUnauthorized, "no user with that email exists", err)
+			respondWithError(w, http.StatusUnauthorized, "incorrect email or password", err)
 			return
 		}
 		respondWithError(w, http.StatusInternalServerError, "error while retrieving user", err)
@@ -35,7 +31,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = auth.CheckPasswordHash(pl.Password, user.HashedPassword); err != nil {
-		respondWithError(w, http.StatusUnauthorized, "incorrect password", nil)
+		respondWithError(w, http.StatusUnauthorized, "incorrect email or password", nil)
     return
 	}
 
