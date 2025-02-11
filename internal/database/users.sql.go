@@ -17,7 +17,7 @@ VALUES (
   NOW(),
   $1
 )
-RETURNING id, email, created_at, updated_at
+RETURNING id, email, created_at, updated_at, password
 `
 
 func (q *Queries) CreateUser(ctx context.Context, email string) (User, error) {
@@ -28,6 +28,7 @@ func (q *Queries) CreateUser(ctx context.Context, email string) (User, error) {
 		&i.Email,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Password,
 	)
 	return i, err
 }

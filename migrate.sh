@@ -12,18 +12,13 @@ execute_migration() {
     exit 1
   fi
 
-  local output=$(goose postgres $DATABASE_CONNECTION $command 2>&1)
-  local status=$?
+  local output status
+  output=$(set -o pipefail; goose postgres "$DATABASE_CONNECTION" "$command" 2>&1)
+  status=$?
 
   cd - >/dev/null
 
   if [ $status -eq 0 ]; then
-    if [[ $output == *"no migrations to run"* ]]; then
-      echo "$output"
-      echo
-      return 0
-    fi
-
     echo "$success_message"
     echo "$output"
     echo
