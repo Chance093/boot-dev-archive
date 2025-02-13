@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -74,3 +75,40 @@ func TestJWTReturnsCorrectUserID(t *testing.T) {
     t.Fatalf("expected user id's to match: received userID = %v, resUserID = %v", userID, resUserID)
   }
 } 
+
+func TestGetBearerToken(t *testing.T) {
+  headers := http.Header{}
+  headers.Set("Authorization", "Bearer thisismyfaketoken")
+
+  token, err := GetBearerToken(headers)
+  if err != nil {
+    t.Fatalf("expected no error: received err %v", err)
+  }
+
+  if token != "thisismyfaketoken" {
+    t.Fatalf("expected token = 'thisismyfaketoken', received token = '%s'", token)
+  }
+}
+
+func TestGetBearerTokenFail(t *testing.T) {
+  headers := http.Header{}
+
+  _, err := GetBearerToken(headers)
+  if err != nil {
+    if err.Error() != "Authorization header missing" {
+      t.Fatalf("expected error 'Authorization header missing': received %v", err)
+    }
+  }
+}
+
+func TestGetBearerTokenFail2(t *testing.T) {
+  headers := http.Header{}
+  headers.Set("Authorization", "thisismyfaketoken")
+
+  _, err := GetBearerToken(headers)
+  if err != nil {
+    if err.Error() != "Authorization header missing Bearer token" {
+      t.Fatalf("expected error 'Authorization header missing Bearer token': received %v", err)
+    }
+  }
+}

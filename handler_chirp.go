@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Chance093/chirpy/internal/auth"
 	"github.com/Chance093/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -20,10 +21,22 @@ type Chirp struct {
 }
 
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
+  // validate jwt
+  token, err := auth.GetBearerToken(r.Header)
+  if err != nil {
+    respondWithError(w, http.StatusUnauthorized, "Invalid authorization header", err)
+    return
+  }
+
+  userID, err := auth.ValidateJWT(token, cfg.tokenSecret)
+  if err != nil {
+    respondWithError(w, http.StatusUnauthorized, "Invalid token", err)
+    return
+  }
+
 	// get payload
 	type payload struct {
 		Body   string    `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
 	}
 
 	pl := payload{}
@@ -42,7 +55,7 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 	// create chirp
 	chirp, err := cfg.db.CreateChirp(r.Context(), database.CreateChirpParams{
 		Body:   validatedBody,
-		UserID: pl.UserID,
+		UserID: userID,
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "error while creating chirp", err)
