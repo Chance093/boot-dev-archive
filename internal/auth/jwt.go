@@ -15,9 +15,9 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+func MakeJWT(userID uuid.UUID, tokenSecret string, duration time.Duration) (string, error) {
 	currentTime := time.Now().UTC()
-	expirationTime := currentTime.Add(expiresIn)
+	expirationTime := currentTime.Add(duration)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		jwt.RegisteredClaims{
