@@ -17,6 +17,7 @@ type apiConfig struct {
 	fileServerHits atomic.Int32
 	db             *database.Queries
 	env            string
+	polkaKey       string
 	tokenSecret    string
 }
 
@@ -32,6 +33,7 @@ func main() {
 	dbUrl := os.Getenv("DB_URL")
 	serverEnv := os.Getenv("SERVER_ENV")
 	tokenSecret := os.Getenv("TOKEN_SECRET")
+	polkaKey := os.Getenv("POLKA_KEY")
 
 	if dbUrl == "" {
 		log.Fatal("DB_URL must be set in .env")
@@ -41,6 +43,9 @@ func main() {
 	}
 	if tokenSecret == "" {
 		log.Fatal("TOKEN_SECRET must be set in .env")
+	}
+	if polkaKey == "" {
+		log.Fatal("POLKA_KEY must be set in .env")
 	}
 
 	// connect db
@@ -54,6 +59,7 @@ func main() {
 		fileServerHits: atomic.Int32{},
 		db:             database.New(dbConn),
 		env:            serverEnv,
+		polkaKey:       polkaKey,
 		tokenSecret:    tokenSecret,
 	}
 
@@ -76,6 +82,8 @@ func main() {
 
 	mux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", cfg.handlerReset)
+
+	mux.HandleFunc("POST /api/polka/webhooks", cfg.handlerPolkaWebhook)
 
 	// init server
 	s := &http.Server{
