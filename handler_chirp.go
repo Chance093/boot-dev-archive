@@ -21,22 +21,22 @@ type Chirp struct {
 }
 
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
-  // validate jwt
-  token, err := auth.GetBearerToken(r.Header)
-  if err != nil {
-    respondWithError(w, http.StatusUnauthorized, "Invalid authorization header", err)
-    return
-  }
+	// validate jwt
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Invalid authorization header", err)
+		return
+	}
 
-  userID, err := auth.ValidateJWT(token, cfg.tokenSecret)
-  if err != nil {
-    respondWithError(w, http.StatusUnauthorized, "Invalid token", err)
-    return
-  }
+	userID, err := auth.ValidateJWT(token, cfg.tokenSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Invalid token", err)
+		return
+	}
 
 	// get payload
 	type payload struct {
-		Body   string    `json:"body"`
+		Body string `json:"body"`
 	}
 
 	pl := payload{}
@@ -122,6 +122,52 @@ func (cfg *apiConfig) handlerGetChirpByID(w http.ResponseWriter, r *http.Request
 		UpdatedAt: chirp.UpdatedAt,
 		UserID:    chirp.UserID,
 	})
+}
+
+func (cfg *apiConfig) handlerDeleteChirpByID(w http.ResponseWriter, r *http.Request) {
+	// validate jwt
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Invalid authorization header", err)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(token, cfg.tokenSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Invalid token", err)
+		return
+	}
+
+	chirpIdString := r.PathValue("id")
+
+	// parse id into UUID
+	chirpID, err := uuid.Parse(chirpIdString)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid chirp id", err)
+		return
+	}
+
+  chirp, err := cfg.db.GetChirpByID(r.Context(), chirpID)
+  if err != nil {
+		if strings.Contains(err.Error(), "no rows in result set") {
+			respondWithError(w, http.StatusNotFound, "no chirp with that id exists", err)
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "error while retrieving chirp", err)
+		return
+  }
+
+  if chirp.UserID != userID {
+		respondWithError(w, http.StatusForbidden, "forbidden resource", err)
+		return
+  }
+
+	if err := cfg.db.DeleteChirpByID(r.Context(), chirpID); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "error while deleting chirp", err)
+		return
+  }
+
+  respondWithJSON(w, http.StatusNoContent, nil)
 }
 
 func validateChirp(body string) (string, error) {
