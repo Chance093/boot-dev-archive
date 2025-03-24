@@ -73,7 +73,27 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 }
 
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
-	chirps, err := cfg.db.GetAllChrips(r.Context())
+	// extract optional authorId
+	queryParams := r.URL.Query()
+	authorIDStr := queryParams.Get("author_id")
+	var authorId uuid.UUID
+	if authorIDStr != "" {
+		authorID, err := uuid.Parse(authorIDStr)
+		if err != nil {
+			http.Error(w, "Invalid author_id", http.StatusBadRequest)
+			return
+		}
+		authorId = authorID
+	}
+
+	var chirps []database.Chirp
+	var err error
+  if len(authorId) > 0 {
+		chirps, err = cfg.db.GetAllChirpsByAuthorId(r.Context(), authorId)
+	} else {
+		chirps, err = cfg.db.GetAllChrips(r.Context())
+	}
+
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "error while getting all chirps", err)
 	}
@@ -147,27 +167,27 @@ func (cfg *apiConfig) handlerDeleteChirpByID(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-  chirp, err := cfg.db.GetChirpByID(r.Context(), chirpID)
-  if err != nil {
+	chirp, err := cfg.db.GetChirpByID(r.Context(), chirpID)
+	if err != nil {
 		if strings.Contains(err.Error(), "no rows in result set") {
 			respondWithError(w, http.StatusNotFound, "no chirp with that id exists", err)
 			return
 		}
 		respondWithError(w, http.StatusInternalServerError, "error while retrieving chirp", err)
 		return
-  }
+	}
 
-  if chirp.UserID != userID {
+	if chirp.UserID != userID {
 		respondWithError(w, http.StatusForbidden, "forbidden resource", err)
 		return
-  }
+	}
 
 	if err := cfg.db.DeleteChirpByID(r.Context(), chirpID); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "error while deleting chirp", err)
 		return
-  }
+	}
 
-  respondWithJSON(w, http.StatusNoContent, nil)
+	respondWithJSON(w, http.StatusNoContent, nil)
 }
 
 func validateChirp(body string) (string, error) {
