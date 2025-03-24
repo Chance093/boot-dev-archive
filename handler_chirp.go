@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -76,6 +77,8 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 	// extract optional authorId
 	queryParams := r.URL.Query()
 	authorIDStr := queryParams.Get("author_id")
+	order := queryParams.Get("sort")
+
 	var authorId uuid.UUID
 	if authorIDStr != "" {
 		authorID, err := uuid.Parse(authorIDStr)
@@ -86,9 +89,17 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 		authorId = authorID
 	}
 
+	if order == "" {
+		order = "asc"
+	}
+	if order != "asc" && order != "desc" {
+		http.Error(w, "Invalid sort query param", http.StatusBadRequest)
+		return
+	}
+
 	var chirps []database.Chirp
 	var err error
-  if len(authorId) > 0 {
+	if authorId.String() != "00000000-0000-0000-0000-000000000000" {
 		chirps, err = cfg.db.GetAllChirpsByAuthorId(r.Context(), authorId)
 	} else {
 		chirps, err = cfg.db.GetAllChrips(r.Context())
@@ -97,6 +108,15 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "error while getting all chirps", err)
 	}
+
+	sort.Slice(chirps, func(i, j int) bool {
+		if order == "desc" {
+			return chirps[i].CreatedAt.After(chirps[j].CreatedAt)
+		}
+
+		return chirps[j].CreatedAt.After(chirps[i].CreatedAt)
+	})
+
 
 	res := make([]Chirp, 0, len(chirps))
 
